@@ -16,15 +16,21 @@ namespace logger{
 		time_str.erase(time_str.end() - 1);
 		std::cout << "[" << time_str << "]" << " ";
 		// set the color of the output based on the log LogLevel
+		bool shouldSay = true;
 		switch (level)
 		{
 		case LogLevel::DEBUG:
+#ifdef NDEBUG
+			shouldSay = false;
+#else 
+
 #ifdef _WIN32
 			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_GREEN);
 #else
 			std::cout << "\033[1;32m";
 #endif
 			std::cout << "DEBUG";
+#endif
 			break;
 		case LogLevel::INFO:
 #ifdef _WIN32
@@ -60,7 +66,8 @@ namespace logger{
 			break;
 		}
 		// print the message
-		std::cout << " "<< message << "\033[0m" << std::endl;
+		if(shouldSay)
+			std::cout << " "<< message << "\033[0m" << std::endl;
 
 	}
 }

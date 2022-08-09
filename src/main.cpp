@@ -5,6 +5,9 @@
 #include "util/GLutil.h"
 #include "util/logger.h"
 
+#include "arena.h"
+using namespace Arena;
+
 
 const int OPENGL_MAJOR_VERSION = 4;
 const int OPENGL_MINOR_VERSION = 6;
@@ -14,10 +17,10 @@ const int SCR_HEIGHT = 600;
 
 GLfloat Vertices[] =
 {
-	0.5f,  0.5f, 0.0f,  // top right 
-	0.5f, -0.5f, 0.0f,  // bottom right
-	-0.5f, -0.5f, 0.0f,  // bottom left
-	-0.5f,  0.5f, 0.0f
+	1.0f,  1.0f, 0.0f,  // top right 
+	1.0f, -1.0f, 0.0f,  // bottom right
+	-1.0f, -1.0f, 0.0f,  // bottom left
+	-1.0f,  1.0f, 0.0f
 };
 
 GLuint Indices[] =
@@ -70,6 +73,12 @@ std::vector<GLuint> alltheobjects()
 	return std::vector<GLuint>{VAO, VBO, EBO};
 }
 
+void placeBasicScene() {
+	objects.push_back(Object{ { 0.0f, 1.0f, 0.0f }, 0.5f, Material{ { 0.5f, 0.5f, 0.5f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, 0.0f, 0.0f } });
+	lights.push_back(Light{ { 0.0f, 5.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, 0.5f, 1.0f, 100.0f });
+	planeMaterial = Material({ 0.5F, 0.5F, 0.5F }, { 0.75F, 0.75F, 0.75F }, { 0.0F, 0.0F, 0.0F }, 0.0F, 0.0F);
+}
+
 
 int main()
 {
@@ -113,8 +122,8 @@ int main()
 	glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
 
-	GLuint vertexShader = loadShader("shaders/trivertex.glsl", GL_VERTEX_SHADER);
-	GLuint fragmentShader = loadShader("shaders/trifragment.glsl", GL_FRAGMENT_SHADER);
+	GLuint vertexShader = loadShader("shaders/trivertex.vert.glsl", GL_VERTEX_SHADER);
+	GLuint fragmentShader = loadShader("shaders/trifragment.frag.glsl", GL_FRAGMENT_SHADER);
 
 	GLuint shaderProg = createShaderProgram(std::vector({vertexShader, fragmentShader}));
 
@@ -127,6 +136,10 @@ int main()
 	VAO = objects[0];
 	VBO = objects[1];
 	EBO = objects[2];
+	glUseProgram(shaderProg);
+
+	placeBasicScene();
+	bindAll(shaderProg);
 
 
 	while(!glfwWindowShouldClose(window))
@@ -136,7 +149,6 @@ int main()
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glUseProgram(shaderProg);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

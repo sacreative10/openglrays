@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "C/C++",
+            "compileCommands": "build/compile_commands.json",
+            "intelliSenseMode": "linux-gcc-x64",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/thirdParty/glad/include",
+                "${workspaceFolder}/thirdParty/glm"
+            ]
+        }
+    ],
+    "version": 4
+}

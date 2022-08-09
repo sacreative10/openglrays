@@ -1,0 +1,7 @@
+{
+    "cmake.configureOnOpen": true,
+    "C_Cpp.clang_format_fallbackStyle": "LLVM",
+    "files.associations": {
+        "initializer_list": "cpp"
+    }
+}
