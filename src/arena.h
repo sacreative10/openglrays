@@ -1,6 +1,7 @@
 #include <initializer_list>
 #include <vector>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 namespace Arena
 {
@@ -38,6 +39,10 @@ namespace Arena
     extern std::vector<Object> objects;
     extern std::vector<Light> lights;
     extern Material planeMaterial;
+    
+    extern glm::vec3 cameraPosition;
+    extern float cameraYaw, cameraPitch;
+
 
     void bindObject(GLuint shader, int index);
     void bindLight(GLuint shader, int index);

@@ -8,6 +8,9 @@ namespace Arena
     std::vector<Light> lights;
     Material planeMaterial;
 
+	glm::vec3 cameraPosition(0, 1, 2);
+	float cameraYaw = 0.0f, cameraPitch = 0.0f;
+
     Object::Object(const std::initializer_list<float>& vertices, float radius, const Material& material)
     {
         for (int i = 0; i < 3; i++)

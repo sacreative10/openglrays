@@ -3,6 +3,8 @@
 #define MAXOBJECTS 100
 #define MAXLIGHTS 100
 
+
+
 struct Ray {
 	vec3 origin;
 	vec3 direction;
@@ -43,9 +45,14 @@ struct SurfaceIntersection
 	Material material;
 };
 
+in vec2 fragUVs;
+
 uniform Object objects[MAXOBJECTS];
 uniform Light lights[MAXLIGHTS];
 uniform Material planeMaterial;
+uniform float aspectRatio;
+uniform mat4 rotationMatrix;
+uniform vec3 cameraPosition;
 out vec4 FragColor;
 
 float rand(vec2 co){
@@ -187,24 +194,12 @@ vec3 computeScreenColor(Ray ray)
 
 void main()
 {
-	float viewPortHeight = 2.0;
-	float viewPortWidth = viewPortHeight * 800.0 / 600.0;
+	vec2 centeredUV = (fragUVs * 2.0 - vec2(1)) * vec2(aspectRatio, 1);
 
-	vec3 origin = vec3(0.0, 1.0, 1.0);
-	vec3 horizontal = vec3(viewPortWidth, 0.0, 0.0);
-	vec3 vertical = vec3(0.0, viewPortHeight, 0.0);
-	vec3 lowerLeft = origin - horizontal / 2.0 - vertical / 2.0 - vec3(0.0, 0.0, 1.0);
+	vec3 rayDir = (normalize(vec4(centeredUV, -1.0, 1.0)) * rotationMatrix).xyz;
 
-	vec2 uv = gl_FragCoord.xy / vec2(800.0, 600.0);
-	vec3 rayDirection = normalize(lowerLeft + uv.x * horizontal + uv.y * vertical - origin);
-	vec3 color = computeScreenColor(Ray(origin, rayDirection));
+	Ray cameraRay = Ray(cameraPosition, rayDir);
 
-	// vec3 cameraPosition = vec3(0.0, 1.0, 1.0);
-	// vec3 cameraDirection = normalize(vec3(0.0, 0.0, -1.0));
-	// vec3 cameraRight = normalize(cross(cameraDirection, vec3(0.0, 1.0, 0.0)));
-	// vec3 cameraUp = normalize(cross(cameraRight, cameraDirection));
-	// vec2 uv = gl_FragCoord.xy / vec2(800.0, 600.0);
-	// vec3 rayDirection = normalize(cameraPosition + uv.x * cameraRight + uv.y * cameraUp - cameraPosition);
-	// vec3 color = computeScreenColor(Ray(cameraPosition, rayDirection));
-	FragColor = vec4(color, 1.0);
+	vec3 screenColor = computeScreenColor(cameraRay);
+	FragColor = vec4(screenColor, 1.0);
 }

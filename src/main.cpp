@@ -1,9 +1,14 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 
 #include "util/GLutil.h"
 #include "util/logger.h"
+
 
 #include "arena.h"
 using namespace Arena;
@@ -28,6 +33,16 @@ GLuint Indices[] =
 	0, 1, 3,
 	1, 2, 3
 };
+
+const GLfloat UVs[] = {
+	0.0F, 0.0F,
+	1.0F, 0.0F,
+	1.0F, 1.0F,
+	1.0F, 1.0F,
+	0.0F, 1.0F,
+	0.0F, 0.0F,
+};
+
 
 bool vSync = true;
 
@@ -79,6 +94,57 @@ void placeBasicScene() {
 	planeMaterial = Material({ 0.5F, 0.5F, 0.5F }, { 0.75F, 0.75F, 0.75F }, { 0.0F, 0.0F, 0.0F }, 0.0F, 0.0F);
 }
 
+
+void handleMovement(GLFWwindow* window, glm::vec3 cameraPosition, float cameraYaw, float cameraPitch, glm::mat4* rotationMatrix)
+{
+	double mouseX, mouseY;
+	glfwGetCursorPos(window, &mouseX, &mouseY);
+	//glfwSetCursorPos(window, SCR_WIDTH / 2, SCR_HEIGHT / 2);
+
+	float xoffset = (float)mouseX - SCR_WIDTH / 2;
+	float yoffset = (float)mouseY - SCR_HEIGHT / 2;
+
+	cameraYaw += xoffset * 0.01f;
+	cameraPitch += yoffset * 0.01f;
+
+	if (cameraPitch > 89.0f)
+		cameraPitch = 89.0f;
+	if (cameraPitch < -89.0f)
+		cameraPitch = -89.0f;
+
+	*rotationMatrix = glm::rotate(glm::rotate(glm::mat4(1), cameraPitch, glm::vec3(1, 0, 0)), cameraYaw, glm::vec3(0, 1, 0));
+	
+	glm::vec3 forward = glm::vec3(glm::vec4(0, 0, -1, 0) * (*rotationMatrix));
+
+	glm::vec3 up(0, 1, 0);
+	glm::vec3 right = glm::cross(forward, up);
+
+	glm::vec3 movementDir = glm::vec3(0, 0, 0);
+	float multiplier = 1.0f;
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		movementDir += forward;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		movementDir -= forward;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		movementDir -= right;	
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		movementDir += right;
+	if (glfwGetKey(window, GLFW_KEY_SPACE)) 
+		movementDir += up;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
+		movementDir -= up;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL)) 
+		multiplier = 5;
+	
+	if(glm::length(movementDir) > 0.0f)
+	{
+		cameraPosition += glm::normalize(movementDir) * 0.05f * multiplier;
+	}
+
+}
+
+glm::mat4 rotationMatrix(1);
 
 int main()
 {
@@ -136,20 +202,37 @@ int main()
 	VAO = objects[0];
 	VBO = objects[1];
 	EBO = objects[2];
+
+	GLuint uvBuffer;
+	glGenBuffers(1, &uvBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(UVs), UVs, GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glEnableVertexAttribArray(1);
+
+	glBindVertexArray(VAO);
+
+
 	glUseProgram(shaderProg);
 
 	placeBasicScene();
 	bindAll(shaderProg);
 
+	glUniform1f(glGetUniformLocation(shaderProg, "aspectRatio"), (float)SCR_WIDTH / (float)SCR_HEIGHT);
+	
 
 	while(!glfwWindowShouldClose(window))
 	{
 		input_callback(window);
-
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glBindVertexArray(VAO);
+		rotationMatrix = glm::rotate(glm::rotate(glm::mat4(1), cameraPitch, glm::vec3(1, 0, 0)), cameraYaw, glm::vec3(0, 1, 0));
+		handleMovement(window, cameraPosition, cameraYaw, cameraPitch, &rotationMatrix);
+		// send the rotation matrix to the shader along with the camera position
+		glUniformMatrix4fv(glGetUniformLocation(shaderProg, "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rotationMatrix));
+		glUniform3f(glGetUniformLocation(shaderProg, "cameraPosition"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
